@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  IMAGE: ghcr.io/${{ github.repository }}:latest
+  IMAGE: ghcr.io/chas-grupp-1-kurs-6/company-website:latest
 
 jobs:
   deploy:
