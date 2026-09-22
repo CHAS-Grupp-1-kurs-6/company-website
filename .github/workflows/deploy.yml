@@ -83,7 +83,7 @@ jobs:
       # --- Deploy to K3s ---
       - name: Apply manifests and update image
         run: |
-          export DEPLOY_IMAGE="${{ env.IMAGE }}"
+          export DEPLOY_IMAGE="company-website:latest"
           envsubst < k8s/deployment.yaml > /tmp/deployment.yaml
           kubectl apply -f /tmp/deployment.yaml -f k8s/pvc.yaml -f k8s/service.yaml
           kubectl rollout status deployment/company-website --timeout=120s
