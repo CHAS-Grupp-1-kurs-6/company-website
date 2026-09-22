@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  IMAGE: ghcr.io/chas-grupp-1-kurs-6/company-website:latest
+  IMAGE_URI: ghcr.io/chas-grupp-1-kurs-6/company-website
 
 jobs:
   deploy:
@@ -29,8 +29,12 @@ jobs:
 
       - name: Build and push image
         run: |
-          docker build -t ${{ env.IMAGE }} .
-          docker push ${{ env.IMAGE }}
+          SHORT_SHA="${GITHUB_SHA::7}"
+          docker build \
+            -t "${{ env.IMAGE_URI }}:latest" \
+            -t "${{ env.IMAGE_URI }}:${SHORT_SHA}" .
+          docker push "${{ env.IMAGE_URI }}:latest"
+          docker push "${{ env.IMAGE_URI }}:${SHORT_SHA}"
 
       # --- Network connectivity to K3s node ---
       - name: Generate Ephemeral Headscale Key
