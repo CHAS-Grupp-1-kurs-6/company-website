@@ -13,14 +13,13 @@ spec:
     metadata:
       labels:
         app: company-website
+        git.commit: "${GIT_COMMIT}"
     spec:
       containers:
       - name: web
         image: ${DEPLOY_IMAGE}
-        imagePullPolicy: Never
         ports:
         - containerPort: 7000
-          hostPort: 80
         env:
         - name: FLASK_DEBUG
           value: "false"

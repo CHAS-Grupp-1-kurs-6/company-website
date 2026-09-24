@@ -14,10 +14,14 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
 
       # --- Build & push to GHCR ---
       - name: Log in to GitHub Container Registry
@@ -27,14 +31,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_URI }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
       - name: Build and push image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Sign image with Cosign
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
         run: |
-          SHORT_SHA="${GITHUB_SHA::7}"
-          docker build \
-            -t "${{ env.IMAGE_URI }}:latest" \
-            -t "${{ env.IMAGE_URI }}:${SHORT_SHA}" .
-          docker push "${{ env.IMAGE_URI }}:latest"
-          docker push "${{ env.IMAGE_URI }}:${SHORT_SHA}"
+          cosign sign --yes "${{ env.IMAGE_URI }}@${DIGEST}"
 
       # --- Network connectivity to K3s node ---
       - name: Generate Ephemeral Headscale Key
@@ -87,10 +106,11 @@ jobs:
       # --- Deploy to K3s ---
       - name: Apply manifests and update image
         run: |
-          export DEPLOY_IMAGE="company-website:latest"
+          export DEPLOY_IMAGE="${IMAGE_URI}@${{ steps.push.outputs.digest }}"
+          export GIT_COMMIT="${GITHUB_SHA::7}"
           envsubst < k8s/deployment.yaml > /tmp/deployment.yaml
           echo "=== GENERATED DEPLOYMENT ==="
           cat /tmp/deployment.yaml
           echo "=== END GENERATED DEPLOYMENT ==="
-          kubectl apply -f /tmp/deployment.yaml -f k8s/pvc.yaml -f k8s/service.yaml
+          kubectl apply -f /tmp/deployment.yaml -f k8s/pvc.yaml -f k8s/service.yaml -f k8s/ingress.yaml
           kubectl rollout status deployment/company-website --timeout=120s
