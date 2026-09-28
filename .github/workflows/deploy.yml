@@ -49,6 +49,24 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      # --- Generate CycloneDX SBOM ---
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE_URI }}@${{ steps.push.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+
+      # --- Attest SBOM with Cosign ---
+      - name: Attest SBOM with Cosign
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          cosign attest --yes \
+            --predicate sbom.cdx.json \
+            --type cyclonedx \
+            "${{ env.IMAGE_URI }}@${DIGEST}"
+
       - name: Sign image with Cosign
         env:
           DIGEST: ${{ steps.push.outputs.digest }}
