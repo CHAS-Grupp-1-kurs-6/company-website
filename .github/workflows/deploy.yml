@@ -43,6 +43,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.0
         with:
@@ -51,6 +58,13 @@ jobs:
       - name: Sign image with Cosign
         run: |
           cosign sign --yes "ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}"
+
+      - name: Attest SBOM with Cosign
+        run: |
+          cosign attest --yes \
+            --predicate sbom.cdx.json \
+            --type cyclonedx \
+            "ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}"
 
       # --- Network connectivity to K3s node ---
       - name: Generate Ephemeral Headscale Key
