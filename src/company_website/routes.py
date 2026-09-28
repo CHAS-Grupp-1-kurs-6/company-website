@@ -1,6 +1,6 @@
 import re
 
-from flask import Blueprint, jsonify, render_template, render_template_string, redirect, url_for, request, flash
+from flask import Blueprint, jsonify, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from .db import get_db
 from .models import User
@@ -22,14 +22,19 @@ def _contains_blocked_email_syntax(template):
 
 
 def _render_email_preview(template, user):
-    return render_template_string(
-        template,
-        firstname=user.first_name or '',
-        lastname=user.last_name or '',
-        email=user.email or '',
-        role=user.role or '',
-        company=COMPANY_NAME,
-    )
+    values = {
+        'firstname': user.first_name or '',
+        'lastname': user.last_name or '',
+        'email': user.email or '',
+        'role': user.role or '',
+        'company': COMPANY_NAME,
+    }
+
+    def replace_variable(match):
+        variable = match.group(1).strip()
+        return str(values.get(variable, ''))
+
+    return EMAIL_EXPRESSION_PATTERN.sub(replace_variable, template)
 
 
 @main_bp.route('/')
