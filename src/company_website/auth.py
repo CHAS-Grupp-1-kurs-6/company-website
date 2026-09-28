@@ -29,7 +29,8 @@ def load_user(user_id):
             row['email'],
             row['about'],
             row['role'],
-            row['internal_notes']
+            row['internal_notes'],
+            row['email_signature'],
         )
     return None
 
@@ -84,7 +85,8 @@ def login():
                 row['email'],
                 row['about'],
                 row['role'],
-                row['internal_notes']
+                row['internal_notes'],
+                row['email_signature'],
             )
             login_user(user)
             flash('Login successful!', 'success')
