@@ -15,6 +15,14 @@ spec:
         app: company-website
         git.commit: "${GIT_COMMIT}"
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: web
         image: ${DEPLOY_IMAGE}
@@ -23,6 +31,17 @@ spec:
         env:
         - name: FLASK_DEBUG
           value: "false"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 384Mi
         livenessProbe:
           httpGet:
             path: /healthz
@@ -38,7 +57,13 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /app/data
+        - name: tmp
+          mountPath: /tmp
       volumes:
       - name: data
         persistentVolumeClaim:
           claimName: company-website-data
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi
