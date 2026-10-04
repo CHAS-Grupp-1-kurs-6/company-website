@@ -91,38 +91,11 @@ jobs:
           cosign sign --yes "${{ env.IMAGE_URI }}@${DIGEST}"
 
       # --- Network connectivity to K3s node ---
-      - name: Generate Ephemeral Headscale Key
-        id: generate_key
-        run: |
-          EXPIRATION=$(date -u -d '+10 minutes' +%Y-%m-%dT%H:%M:%SZ)
-
-          RESPONSE=$(curl -sS --fail-with-body -X POST "${{ secrets.HEADSCALE_URL }}/api/v1/preauthkey" \
-            -H "Authorization: Bearer ${{ secrets.HEADSCALE_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-                  "user": ${{ vars.HEADSCALE_USER_ID }},
-                  "ephemeral": true,
-                  "reusable": false,
-                  "expiration": "'"$EXPIRATION"'",
-                  "aclTags": ["tag:github-runner"]
-                }')
-
-          EPHEMERAL_KEY=$(echo "$RESPONSE" | jq -r '.preAuthKey.key')
-
-          if [ -z "$EPHEMERAL_KEY" ] || [ "$EPHEMERAL_KEY" == "null" ]; then
-            echo "Error: Failed to retrieve key from Headscale API"
-            echo "Response: $RESPONSE"
-            exit 1
-          fi
-
-          echo "::add-mask::$EPHEMERAL_KEY"
-          echo "key=$EPHEMERAL_KEY" >> $GITHUB_OUTPUT
-
       - name: Connect to Headscale Mesh
         uses: tailscale/github-action@v4
         with:
-          authkey: ${{ steps.generate_key.outputs.key }}
-          args: --login-server=${{ secrets.HEADSCALE_URL }}
+          authkey: ${{ secrets.TS_AUTHKEY }}
+          args: --login-server=${{ vars.HEADSCALE_URL }}
           version: 1.102.4
 
       - name: Verify connectivity to K3s node
