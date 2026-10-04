@@ -1,29 +1,12 @@
-# Git
-.git/
-.gitignore
-
-# Python
-__pycache__/
+.git
+.github
+k8s
+company-website
+.venv
+venv
+__pycache__
 *.pyc
-*.pyo
-*.egg-info/
-.eggs/
-venv/
 .env
-.pytest_cache/
-
-# Build artifacts
-build/
-dist/
-
-# Local data & tests
-data/
-tests/
-
-# Deployment configs
-k8s/
-docker-compose.yml
-
-# Docs
-README.md
-AGENT.md
+*.md
+Dockerfile
+.dockerignore
