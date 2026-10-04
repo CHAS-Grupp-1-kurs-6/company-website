@@ -131,10 +131,18 @@ jobs:
           echo "Tailscale connectivity confirmed"
 
       # --- Configure kubectl for remote k3s ---
-      - name: Configure kubeconfig
+      - name: Configure kubeconfig (OIDC, ingen statisk nyckel)
+        env:
+          K3S_CA_CERT: ${{ vars.K3S_CA_CERT }}
         run: |
+          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=k3s-team1" | jq -r .value)
+          echo "::add-mask::$TOKEN"
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+          echo "$K3S_CA_CERT" > /tmp/k3s-ca.crt
+          kubectl config set-cluster k3s --server=https://10.0.${{ vars.TEAM_ID }}.3:6443 --certificate-authority=/tmp/k3s-ca.crt --embed-certs=true
+          kubectl config set-credentials github-oidc --token="$TOKEN"
+          kubectl config set-context deploy --cluster=k3s --user=github-oidc --namespace=default
+          kubectl config use-context deploy
           chmod 600 ~/.kube/config
           kubectl get pods -n default
 
