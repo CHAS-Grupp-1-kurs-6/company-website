@@ -96,7 +96,7 @@ jobs:
         run: |
           EXPIRATION=$(date -u -d '+10 minutes' +%Y-%m-%dT%H:%M:%SZ)
 
-          RESPONSE=$(curl -s -f -X POST "${{ secrets.HEADSCALE_URL }}/api/v1/preauthkey" \
+          RESPONSE=$(curl -sS --fail-with-body -X POST "${{ secrets.HEADSCALE_URL }}/api/v1/preauthkey" \
             -H "Authorization: Bearer ${{ secrets.HEADSCALE_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{
