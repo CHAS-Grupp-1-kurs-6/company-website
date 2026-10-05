@@ -72,6 +72,9 @@ def view_profile(id):
         row['internal_notes'],
         row['email_signature'],
     )
+    user.password_hash = None
+    if str(current_user.id) != str(id):
+        user.internal_notes = None
     return render_template('view_profile.html', user=user)
 
 
@@ -105,6 +108,9 @@ def email_preview(id):
 @main_bp.route('/profiles/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile(id):
+    if str(current_user.id) != str(id):
+        return "Forbidden", 403
+
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE id = ?", (id,))
@@ -131,8 +137,8 @@ def edit_profile(id):
         last_name = request.form.get('last_name', '')
         email = request.form.get('email', '')
         about = request.form.get('about', '')
-        role = request.form.get('role', '')
-        internal_notes = request.form.get('internal_notes', '')
+        role = user.role
+        internal_notes = user.internal_notes
         email_signature = request.form.get('email_signature', user.email_signature)
 
         conn = get_db()
