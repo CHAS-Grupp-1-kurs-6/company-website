@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-metadata-server
+  namespace: default
+spec:
+  egress:
+  - to:
+    - namespaceSelector: {}
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+  podSelector: {}
+  policyTypes:
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-metadata-server
+  namespace: security-tools
+spec:
+  egress:
+  - to:
+    - namespaceSelector: {}
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32
+  podSelector: {}
+  policyTypes:
+  - Egress
