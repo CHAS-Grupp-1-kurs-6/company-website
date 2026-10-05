@@ -1,0 +1,33 @@
+# Appliceras manuellt av admin, inte av pipelinen.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: github-deployer
+  namespace: default
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "services", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: github-deployer
+  namespace: default
+subjects:
+  - kind: User
+    name: "github:repo:CHAS-Grupp-1-kurs-6@317844207/company-website@1379369756:ref:refs/heads/main"
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: github-deployer
+  apiGroup: rbac.authorization.k8s.io
